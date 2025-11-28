@@ -44,7 +44,7 @@ class TareasViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    // Nuevo método para actualizar toda la tarea
+    
     fun actualizarTareaCompleta(tarea: Tarea) {
         viewModelScope.launch {
             tareaDao.actualizarTarea(tarea)
