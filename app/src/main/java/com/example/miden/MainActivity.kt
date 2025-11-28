@@ -4,55 +4,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCard
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Photo
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.internal.composableLambda
-import androidx.compose.runtime.internal.composableLambdaInstance
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavController
-import androidx.navigation.NavHost
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.miden.ui.theme.MiDenTheme
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.lazy.items
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +33,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
-    val notasViewModel: NotasViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    val notasViewModel: NotasViewModel = viewModel()
+    val tareasViewModel: TareasViewModel = viewModel()
 
     Scaffold(
         bottomBar = { BottomBar(navController) }
@@ -77,9 +44,9 @@ fun MyApp() {
             startDestination = "notas",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("tareas") { PantallaTareas(navController) }
-            composable("perfil") { PantallaPerfil(navController) }
             composable("notas") { PantallaNotas(viewModel = notasViewModel) }
+            composable("tareas") { PantallaTareas(navController, viewModel = tareasViewModel) }
+            composable("perfil") { PantallaPerfil(navController) }
         }
     }
 }
@@ -88,7 +55,7 @@ fun MyApp() {
 fun BottomBar(navController: NavHostController) {
     val items = listOf(
         BottomItem("notas", "Notas", Icons.Filled.AddCircle),
-        BottomItem("tareas", "Tareas", Icons.Filled.AddCard),
+        BottomItem("tareas", "Tareas", Icons.Filled.CheckCircle),
         BottomItem("perfil", "Perfil", Icons.Filled.Person)
     )
 
@@ -106,80 +73,5 @@ fun BottomBar(navController: NavHostController) {
         }
     }
 }
+
 data class BottomItem(val route: String, val title: String, val icon: ImageVector)
-
-@Composable
-fun PantallaNotas(viewModel: NotasViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
-    val notas = viewModel.notas
-
-    var titulo by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-
-        Text("Mis Notas", style = MaterialTheme.typography.headlineMedium)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // LazyColumn para la lista de notas
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)   // ocupa todo el espacio disponible
-        ) {
-            items(notas) { nota ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(nota.titulo, fontWeight = FontWeight.Bold)
-                        Text(nota.descripcion)
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Inputs para nueva nota
-        OutlinedTextField(
-            value = titulo,
-            onValueChange = { titulo = it },
-            label = { Text("Título de la nota") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        OutlinedTextField(
-            value = descripcion,
-            onValueChange = { descripcion = it },
-            label = { Text("Descripción") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Button(
-            onClick = {
-                if (titulo.isNotBlank() && descripcion.isNotBlank()) {
-                    viewModel.agregarNota(titulo, descripcion)
-                    titulo = ""
-                    descripcion = ""
-                }
-            },
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Text("Agregar nota")
-        }
-    }
-}
-
-
-

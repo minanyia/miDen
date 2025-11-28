@@ -1,28 +1,59 @@
 package com.example.miden
 
-import android.content.Context
-import androidx.compose.runtime.mutableStateListOf
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
-class TareasViewModel : ViewModel() {
+class TareasViewModel(application: Application) : AndroidViewModel(application) {
+    private val tareaDao = AppDatabase.getDatabase(application).tareaDao()
 
-    var tareas = mutableStateListOf<Tarea>()
-        private set
+    private val _tareas = MutableStateFlow<List<Tarea>>(emptyList())
+    val tareas: StateFlow<List<Tarea>> = _tareas
 
-    fun cargarTareas(context: Context) {
-        val cargadas = TareaStorage.leerTareas(context)
-        tareas.clear()
-        tareas.addAll(cargadas)
+    init {
+        cargarTareas()
     }
 
-    fun actualizarTarea(tarea: Tarea, completada: Boolean) {
-        val index = tareas.indexOf(tarea)
-        if (index != -1) {
-            tareas[index] = tareas[index].copy(completada = completada)
+    private fun cargarTareas() {
+        viewModelScope.launch {
+            tareaDao.obtenerTodasLasTareas().collect { listaTareas ->
+                _tareas.value = listaTareas
+            }
         }
     }
 
-    fun agregarTarea(tarea: Tarea) {
-        tareas.add(tarea)
+    fun agregarTarea(titulo: String, fecha: String) {
+        viewModelScope.launch {
+            val nuevaTarea = Tarea(
+                id = 0,
+                titulo = titulo,
+                fecha = fecha,
+                completada = false
+            )
+            tareaDao.insertarTarea(nuevaTarea)
+        }
+    }
+
+    fun actualizarTarea(tarea: Tarea, completada: Boolean) {
+        viewModelScope.launch {
+            val tareaActualizada = tarea.copy(completada = completada)
+            tareaDao.actualizarTarea(tareaActualizada)
+        }
+    }
+
+    // Nuevo método para actualizar toda la tarea
+    fun actualizarTareaCompleta(tarea: Tarea) {
+        viewModelScope.launch {
+            tareaDao.actualizarTarea(tarea)
+        }
+    }
+
+    fun eliminarTarea(tarea: Tarea) {
+        viewModelScope.launch {
+            tareaDao.eliminarTarea(tarea)
+        }
     }
 }
